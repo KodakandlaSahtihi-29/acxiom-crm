@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Acxiom CRM - Sign In{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5 col-xl-4">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4 p-md-5">
+                    <div class="text-center mb-4">
+                        <div class="d-inline-flex p-3 bg-primary-subtle text-primary rounded-circle mb-3">
+                            <i class="fa-solid fa-user-shield fs-3"></i>
+                        </div>
+                        <h4 class="fw-bold mb-1">Sign In</h4>
+                        <p class="text-muted small">Enter your credentials to access Acxiom CRM</p>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}" novalidate>
+                        <!-- CSRF Token via WTForms hidden_tag -->
+                        {{ form.hidden_tag() }}
+
+                        <!-- Username or Email -->
+                        <div class="mb-3">
+                            <label for="username_or_email" class="form-label fw-semibold small">Username or Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-user text-muted"></i></span>
+                                {{ form.username_or_email(
+                                    class="form-control border-start-0" + (" is-invalid" if form.username_or_email.errors else ""),
+                                    placeholder="e.g. jdoe or jdoe@acxiom.com",
+                                    autofocus=True
+                                ) }}
+                            </div>
+                            {% for error in form.username_or_email.errors %}
+                                <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Password -->
+                        <div class="mb-3">
+                            <label for="password" class="form-label fw-semibold small">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-lock text-muted"></i></span>
+                                {{ form.password(
+                                    class="form-control border-start-0" + (" is-invalid" if form.password.errors else ""),
+                                    placeholder="Enter your password"
+                                ) }}
+                            </div>
+                            {% for error in form.password.errors %}
+                                <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Remember Me -->
+                        <div class="mb-4 form-check">
+                            {{ form.remember_me(class="form-check-input", id="remember_me") }}
+                            <label class="form-check-label small text-muted" for="remember_me">
+                                {{ form.remember_me.label.text }}
+                            </label>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-primary py-2 rounded-3 fw-semibold shadow-sm">
+                                <i class="fa-solid fa-right-to-bracket me-2"></i> Sign In
+                            </button>
+                        </div>
+
+                        <!-- Registration Link -->
+                        <div class="text-center pt-2 border-top">
+                            <p class="small text-muted mb-0">
+                                Don't have an account?
+                                <a href="{{ url_for('auth.register') }}" class="text-primary fw-semibold text-decoration-none">
+                                    Register here
+                                </a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

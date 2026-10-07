@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}Acxiom CRM - Lead Management{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Header & Action Bar -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <h3 class="fw-bold mb-0">Lead Management</h3>
+                {% if is_scoped %}
+                    <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 small">
+                        <i class="fa-solid fa-filter me-1"></i> Your Assigned/Created Leads
+                    </span>
+                {% else %}
+                    <span class="badge bg-primary-subtle text-primary border px-2 py-1 small">
+                        <i class="fa-solid fa-building me-1"></i> Organization Scope ({{ current_user.role }})
+                    </span>
+                {% endif %}
+            </div>
+            <p class="text-muted small mb-0">Track prospect pipeline, nurture contacts, and convert qualified leads.</p>
+        </div>
+        <div>
+            <a href="{{ url_for('lead.create') }}" class="btn btn-primary px-3 rounded-pill shadow-sm">
+                <i class="fa-solid fa-plus me-1"></i> New Lead
+            </a>
+        </div>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-3 p-md-4">
+            <form method="GET" action="{{ url_for('lead.index') }}" class="row g-2 align-items-center">
+                <!-- Search Query -->
+                <div class="col-md-4 col-lg-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                        <input type="text" name="q" class="form-control border-start-0" 
+                               placeholder="Search by lead name, email, phone, company, or code..." 
+                               value="{{ search_query }}">
+                    </div>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="col-sm-6 col-md-3 col-lg-2">
+                    <select name="status" class="form-select">
+                        <option value="All" {% if not status_filter or status_filter == 'All' %}selected{% endif %}>All Statuses</option>
+                        {% for s in all_statuses %}
+                            <option value="{{ s }}" {% if status_filter == s %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Source Filter -->
+                <div class="col-sm-6 col-md-3 col-lg-2">
+                    <select name="source" class="form-select">
+                        <option value="All" {% if not source_filter or source_filter == 'All' %}selected{% endif %}>All Sources</option>
+                        {% for src in all_sources %}
+                            <option value="{{ src }}" {% if source_filter == src %}selected{% endif %}>{{ src }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="col-sm-12 col-md-2 col-lg-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-secondary flex-grow-1 rounded-3">
+                        <i class="fa-solid fa-filter me-1"></i> Filter
+                    </button>
+                    {% if search_query or (status_filter and status_filter != 'All') or (source_filter and source_filter != 'All') %}
+                        <a href="{{ url_for('lead.index') }}" class="btn btn-outline-secondary rounded-3" title="Clear Filters">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Leads Table Card -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Lead Code</th>
+                        <th>Lead / Contact</th>
+                        <th>Company</th>
+                        <th>Source</th>
+                        <th>Status</th>
+                        <th>Expected Value</th>
+                        <th>Assigned To</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if leads %}
+                        {% for l in leads %}
+                            <tr>
+                                <td class="ps-4 fw-semibold">
+                                    <span class="badge bg-light text-dark border font-monospace">
+                                        {{ l.lead_code }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('lead.details', id=l.id) }}" class="fw-bold text-decoration-none text-dark">
+                                        {{ l.lead_name }}
+                                    </a>
+                                    <div class="small text-muted">
+                                        {% if l.email %}<i class="fa-solid fa-envelope me-1"></i>{{ l.email }}{% endif %}
+                                        {% if l.phone %}<span class="ms-2"><i class="fa-solid fa-phone me-1"></i>{{ l.phone }}</span>{% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-muted small">{{ l.company_name or '—' }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary-subtle text-secondary small">{{ l.source or 'Direct' }}</span>
+                                </td>
+                                <td>
+                                    {% if l.status == 'New' %}
+                                        <span class="badge bg-primary-subtle text-primary border border-primary px-2 py-1 rounded-pill">New</span>
+                                    {% elif l.status == 'Contacted' %}
+                                        <span class="badge bg-info-subtle text-info border border-info px-2 py-1 rounded-pill">Contacted</span>
+                                    {% elif l.status == 'Qualified' %}
+                                        <span class="badge bg-warning-subtle text-warning border border-warning px-2 py-1 rounded-pill">Qualified</span>
+                                    {% elif l.status == 'Converted' %}
+                                        <span class="badge bg-success-subtle text-success border border-success px-2 py-1 rounded-pill">
+                                            <i class="fa-solid fa-check me-1"></i> Converted
+                                        </span>
+                                    {% elif l.status == 'Lost' %}
+                                        <span class="badge bg-danger-subtle text-danger border border-danger px-2 py-1 rounded-pill">Lost</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary px-2 py-1 rounded-pill">{{ l.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="fw-semibold">
+                                    ${{ "{:,.2f}".format(l.expected_value) }}
+                                </td>
+                                <td>
+                                    {% if l.assignee %}
+                                        <span class="small fw-semibold text-dark">
+                                            <i class="fa-solid fa-user me-1 text-primary"></i> {{ l.assignee.full_name }}
+                                        </span>
+                                    {% else %}
+                                        <span class="small text-muted italic">Unassigned</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('lead.details', id=l.id) }}" class="btn btn-outline-secondary" title="View Details">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </a>
+                                        {% if l.can_be_converted() and l.can_be_managed_by(current_user) %}
+                                            <a href="{{ url_for('lead.convert', id=l.id) }}" class="btn btn-outline-success" title="Convert to Customer/Opportunity">
+                                                <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                                            </a>
+                                        {% endif %}
+                                        {% if l.can_be_managed_by(current_user) %}
+                                            <a href="{{ url_for('lead.edit', id=l.id) }}" class="btn btn-outline-primary" title="Edit Lead">
+                                                <i class="fa-solid fa-pen-to-square"></i>
+                                            </a>
+                                            <a href="{{ url_for('lead.delete', id=l.id) }}" class="btn btn-outline-danger" title="Delete Lead">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <div class="mb-3">
+                                    <i class="fa-solid fa-bullseye text-muted opacity-50 display-4"></i>
+                                </div>
+                                <h6 class="fw-bold mb-1">No leads found</h6>
+                                <p class="small text-muted mb-3">
+                                    {% if search_query or (status_filter and status_filter != 'All') or (source_filter and source_filter != 'All') %}
+                                        No matching leads for the selected filters.
+                                    {% else %}
+                                        No leads recorded yet in this scope.
+                                    {% endif %}
+                                </p>
+                                <a href="{{ url_for('lead.create') }}" class="btn btn-sm btn-primary rounded-pill px-3">
+                                    <i class="fa-solid fa-plus me-1"></i> Add New Lead
+                                </a>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+            <div class="card-footer bg-white border-top d-flex justify-content-between align-items-center py-3 px-4">
+                <span class="text-muted small">
+                    Showing {{ ((pagination.page - 1) * pagination.per_page) + 1 }} to {{ [pagination.page * pagination.per_page, pagination.total]|min }} of {{ pagination.total }} leads
+                </span>
+                <nav aria-label="Lead pagination">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                            <a class="page-link" href="{{ url_for('lead.index', page=pagination.prev_num, q=search_query, status=status_filter, source=source_filter) }}">Previous</a>
+                        </li>
+                        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                            {% if p %}
+                                <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                                    <a class="page-link" href="{{ url_for('lead.index', page=p, q=search_query, status=status_filter, source=source_filter) }}">{{ p }}</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">…</span></li>
+                            {% endif %}
+                        {% endfor %}
+                        <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                            <a class="page-link" href="{{ url_for('lead.index', page=pagination.next_num, q=search_query, status=status_filter, source=source_filter) }}">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

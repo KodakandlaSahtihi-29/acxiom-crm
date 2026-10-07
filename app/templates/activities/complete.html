@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Complete Activity #{{ activity.id }} - AcxiomCRM{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+    <div class="row justify-content-center">
+        <div class="col-lg-7 col-md-9">
+            <div class="card border-success shadow-sm">
+                <div class="card-header bg-success text-white py-3 d-flex align-items-center justify-content-between">
+                    <h5 class="card-title mb-0">
+                        <i class="fa-solid fa-circle-check me-2"></i> Mark Activity as Completed
+                    </h5>
+                    <span class="badge bg-light text-success">#{{ activity.id }}</span>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Context Summary -->
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered table-sm mb-0">
+                            <tbody>
+                                <tr>
+                                    <th class="w-35 bg-light">Activity Type</th>
+                                    <td><strong>{{ activity.activity_type }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">Subject</th>
+                                    <td><strong>{{ activity.subject }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">Activity Date</th>
+                                    <td>{{ activity.activity_date.strftime('%A, %B %d, %Y') }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">Associated Entity</th>
+                                    <td>
+                                        {% if activity.customer %}
+                                            <strong>{{ activity.customer.customer_name }}</strong> (Customer: {{ activity.customer.customer_code }})
+                                        {% elif activity.lead %}
+                                            <strong>{{ activity.lead.lead_name }}</strong> (Lead: {{ activity.lead.lead_code }})
+                                        {% else %}
+                                            <span class="text-muted">None (General Activity)</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">Description</th>
+                                    <td>{{ activity.description or '<span class="text-muted">None</span>' | safe }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('activity.complete', id=activity.id) }}" novalidate>
+                        {{ form.hidden_tag() }}
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold" for="completion_remarks">
+                                Completion Remarks & Outcome Notes
+                            </label>
+                            {{ form.completion_remarks(class="form-control", rows=4, placeholder="Enter outcome notes, discussion summary, or follow-up actions decided...") }}
+                            <div class="form-text small">Optional: Document what was discussed or accomplished during this activity.</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                            <a href="{{ url_for('activity.details', id=activity.id) }}" class="btn btn-outline-secondary">
+                                <i class="fa-solid fa-xmark me-1"></i> Back
+                            </a>
+                            <button type="submit" class="btn btn-success px-4">
+                                <i class="fa-solid fa-check me-1"></i> Confirm Completed
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

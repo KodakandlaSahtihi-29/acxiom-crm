@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Complete Follow-Up #{{ follow_up.id }} - AcxiomCRM{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+    <div class="row justify-content-center">
+        <div class="col-lg-7 col-md-9">
+            <div class="card border-success shadow-sm">
+                <div class="card-header bg-success text-white py-3 d-flex align-items-center justify-content-between">
+                    <h5 class="card-title mb-0">
+                        <i class="fa-solid fa-circle-check me-2"></i> Mark Follow-Up as Completed
+                    </h5>
+                    <span class="badge bg-light text-success">#{{ follow_up.id }}</span>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Context Summary -->
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered table-sm mb-0">
+                            <tbody>
+                                <tr>
+                                    <th class="w-35 bg-light">Activity Type</th>
+                                    <td><strong>{{ follow_up.follow_up_type }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">Scheduled Date</th>
+                                    <td>{{ follow_up.follow_up_date.strftime('%A, %B %d, %Y') }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">Customer / Lead</th>
+                                    <td>
+                                        {% if follow_up.customer %}
+                                            <strong>{{ follow_up.customer.customer_name }}</strong> (Customer: {{ follow_up.customer.customer_code }})
+                                        {% elif follow_up.lead %}
+                                            <strong>{{ follow_up.lead.lead_name }}</strong> (Lead: {{ follow_up.lead.lead_code }})
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">Original Remarks</th>
+                                    <td>{{ follow_up.remarks or '<span class="text-muted">None</span>' | safe }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('follow_up.complete', id=follow_up.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold" for="completion_remarks">
+                                Outcome & Discussion Notes
+                            </label>
+                            <textarea name="completion_remarks" id="completion_remarks" class="form-control" rows="4" placeholder="Record meeting conclusions, next steps, action items, or agreed client terms..."></textarea>
+                            <div class="form-text small">Record what transpired during this follow-up interaction.</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                            <a href="{{ url_for('follow_up.details', id=follow_up.id) }}" class="btn btn-outline-secondary">
+                                <i class="fa-solid fa-xmark me-1"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success px-4">
+                                <i class="fa-solid fa-check-double me-1"></i> Confirm & Mark Completed
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

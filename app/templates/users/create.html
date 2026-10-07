@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Create New User - AcxiomCRM{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                    <div>
+                        <h4 class="card-title fw-bold mb-0">
+                            <i class="fa-solid fa-user-plus text-primary me-2"></i>Create New User Account
+                        </h4>
+                        <small class="text-muted">Register a new employee into Acxiom CRM with role assignment.</small>
+                    </div>
+                    <a href="{{ url_for('user.index') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fa-solid fa-arrow-left me-1"></i> Back to Users
+                    </a>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('user.create') }}" novalidate>
+                        {{ form.hidden_tag() }}
+
+                        <!-- Account Identity -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="username">Username <span class="text-danger">*</span></label>
+                                {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else ""), placeholder="e.g. jdoe") }}
+                                {% if form.username.errors %}
+                                    <div class="invalid-feedback">{{ form.username.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="email">Corporate Email <span class="text-danger">*</span></label>
+                                {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="e.g. jdoe@acxiom.com") }}
+                                {% if form.email.errors %}
+                                    <div class="invalid-feedback">{{ form.email.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="full_name">Full Name <span class="text-danger">*</span></label>
+                                {{ form.full_name(class="form-control" + (" is-invalid" if form.full_name.errors else ""), placeholder="e.g. John Doe") }}
+                                {% if form.full_name.errors %}
+                                    <div class="invalid-feedback">{{ form.full_name.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="role">Assigned Role <span class="text-danger">*</span></label>
+                                {{ form.role(class="form-select" + (" is-invalid" if form.role.errors else "")) }}
+                                {% if form.role.errors %}
+                                    <div class="invalid-feedback">{{ form.role.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Password Policy Box -->
+                        <div class="card bg-light border-0 p-3 mb-4">
+                            <h6 class="fw-bold mb-2 text-dark"><i class="fa-solid fa-lock text-primary me-2"></i>Password Security Policy</h6>
+                            <ul class="small text-muted mb-0 ps-3">
+                                <li>Minimum 8 characters in length</li>
+                                <li>At least one uppercase letter (A-Z) and one lowercase letter (a-z)</li>
+                                <li>At least one number (0-9)</li>
+                                <li>At least one special non-alphanumeric character (!@#$%^&amp;*)</li>
+                            </ul>
+                        </div>
+
+                        <!-- Password Inputs -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="password">Initial Password <span class="text-danger">*</span></label>
+                                {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="Enter compliant password") }}
+                                {% if form.password.errors %}
+                                    <div class="invalid-feedback">{{ form.password.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold" for="confirm_password">Confirm Password <span class="text-danger">*</span></label>
+                                {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else ""), placeholder="Repeat password") }}
+                                {% if form.confirm_password.errors %}
+                                    <div class="invalid-feedback">{{ form.confirm_password.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Active Switch -->
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                {{ form.is_active(class="form-check-input", role="switch") }}
+                                <label class="form-check-label fw-semibold" for="is_active">Activate account immediately upon creation</label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <a href="{{ url_for('user.index') }}" class="btn btn-outline-secondary">
+                                <i class="fa-solid fa-xmark me-1"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fa-solid fa-check me-1"></i> Create User Account
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

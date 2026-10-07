@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Pending Follow-Ups - AcxiomCRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h2 class="h3 fw-bold mb-1">
+                <i class="fa-solid fa-clock text-warning me-2"></i> Pending & Overdue Follow-Ups
+            </h2>
+            <p class="text-muted small mb-0">Prioritized queue of active follow-ups requiring team action.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('follow_up.index') }}" class="btn btn-outline-secondary">
+                <i class="fa-solid fa-list me-1"></i> All Follow-Ups
+            </a>
+            <a href="{{ url_for('follow_up.schedule') }}" class="btn btn-primary">
+                <i class="fa-solid fa-plus me-1"></i> Schedule Follow-Up
+            </a>
+        </div>
+    </div>
+
+    <!-- Alert banner if overdue items exist -->
+    {% if overdue_items %}
+    <div class="alert alert-danger d-flex align-items-center mb-4 shadow-sm" role="alert">
+        <i class="fa-solid fa-triangle-exclamation fs-3 me-3 text-danger"></i>
+        <div>
+            <h5 class="alert-heading mb-1 fw-bold">Attention Required: {{ overdue_items | length }} Overdue Follow-Up{{ 's' if overdue_items | length > 1 else '' }}</h5>
+            <p class="mb-0 small">These items have passed their scheduled follow-up date and should be contacted, completed, or rescheduled immediately.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filter Bar -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3">
+            <form method="GET" action="{{ url_for('follow_up.pending') }}" class="row g-2 align-items-center">
+                <div class="col-lg-3 col-md-4">
+                    <select name="type" class="form-select">
+                        <option value="">— All Types —</option>
+                        {% for t in FollowUpType.ALL_TYPES %}
+                            <option value="{{ t }}" {% if type_filter == t %}selected{% endif %}>{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-3 col-md-4">
+                    <select name="date_filter" class="form-select">
+                        <option value="">— All Timeframes —</option>
+                        <option value="overdue" {% if date_filter == 'overdue' %}selected{% endif %}>Overdue Only</option>
+                        <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Due Today</option>
+                        <option value="upcoming" {% if date_filter == 'upcoming' %}selected{% endif %}>Upcoming</option>
+                    </select>
+                </div>
+                <div class="col-lg-4 col-md-4">
+                    <select name="assigned_to" class="form-select">
+                        <option value="">— All Assignees —</option>
+                        {% for u in active_users %}
+                            <option value="{{ u.id }}" {% if assigned_filter == u.id %}selected{% endif %}>{{ u.full_name }} ({{ u.role }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-12 d-flex gap-1">
+                    <button type="submit" class="btn btn-warning w-100 text-dark fw-semibold">
+                        <i class="fa-solid fa-filter me-1"></i> Filter
+                    </button>
+                    {% if type_filter or date_filter or assigned_filter %}
+                        <a href="{{ url_for('follow_up.pending') }}" class="btn btn-outline-secondary" title="Reset Filters">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Category Tabs -->
+    <ul class="nav nav-pills mb-3" id="pendingTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-semibold" id="all-tab" data-bs-toggle="pill" data-bs-target="#all-panel" type="button" role="tab">
+                All Active ({{ pending_items | length }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link text-danger fw-semibold" id="overdue-tab" data-bs-toggle="pill" data-bs-target="#overdue-panel" type="button" role="tab">
+                Overdue ({{ overdue_items | length }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link text-dark fw-semibold" id="today-tab" data-bs-toggle="pill" data-bs-target="#today-panel" type="button" role="tab">
+                Due Today ({{ today_items | length }})
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link text-primary fw-semibold" id="upcoming-tab" data-bs-toggle="pill" data-bs-target="#upcoming-panel" type="button" role="tab">
+                Upcoming ({{ upcoming_items | length }})
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Contents -->
+    <div class="tab-content" id="pendingTabsContent">
+        <!-- ALL ACTIVE -->
+        <div class="tab-pane fade show active" id="all-panel" role="tabpanel">
+            {% with items=pending_items %}
+                {% include "follow_ups/_pending_table.html" %}
+            {% endwith %}
+        </div>
+
+        <!-- OVERDUE -->
+        <div class="tab-pane fade" id="overdue-panel" role="tabpanel">
+            {% with items=overdue_items %}
+                {% include "follow_ups/_pending_table.html" %}
+            {% endwith %}
+        </div>
+
+        <!-- TODAY -->
+        <div class="tab-pane fade" id="today-panel" role="tabpanel">
+            {% with items=today_items %}
+                {% include "follow_ups/_pending_table.html" %}
+            {% endwith %}
+        </div>
+
+        <!-- UPCOMING -->
+        <div class="tab-pane fade" id="upcoming-panel" role="tabpanel">
+            {% with items=upcoming_items %}
+                {% include "follow_ups/_pending_table.html" %}
+            {% endwith %}
+        </div>
+    </div>
+</div>
+{% endblock %}

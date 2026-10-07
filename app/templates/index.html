@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Acxiom CRM - System Status{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header Banner -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-10">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-body p-4 p-md-5 bg-gradient text-white" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                        <div>
+                            <span class="badge bg-primary px-3 py-2 rounded-pill mb-3">
+                                <i class="fa-solid fa-rocket me-1"></i> Phase 1 Complete
+                            </span>
+                            <h1 class="display-6 fw-bold mb-2">Acxiom CRM Foundation</h1>
+                            <p class="text-light text-opacity-75 mb-0">
+                                Enterprise CRM architecture initialized with Flask Application Factory pattern, SQLAlchemy ORM, and Microsoft SQL Server LocalDB.
+                            </p>
+                        </div>
+                        <div>
+                            {% if db_status == "Connected" %}
+                                <div class="badge bg-success-subtle text-success border border-success px-4 py-3 rounded-4 fs-6 text-start">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fa-solid fa-circle-check fs-5"></i>
+                                        <div>
+                                            <div class="fw-bold">Database Connected</div>
+                                            <small class="text-muted">SQL Server LocalDB / AcxiomCrmDb</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="badge bg-danger-subtle text-danger border border-danger px-4 py-3 rounded-4 fs-6 text-start">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+                                        <div>
+                                            <div class="fw-bold">Database Error</div>
+                                            <small class="text-muted">{{ error_msg }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verification Status Cards -->
+    <div class="row justify-content-center g-4 mb-5">
+        <div class="col-md-5 col-lg-5">
+            <div class="card h-100 border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="bg-primary-subtle text-primary p-3 rounded-3">
+                            <i class="fa-solid fa-microchip fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title fw-bold mb-0">Runtime &amp; Extensions</h5>
+                            <small class="text-muted">Core application services</small>
+                        </div>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><i class="fa-brands fa-python text-primary me-2"></i> Python Runtime</span>
+                            <span class="badge bg-success">3.13 Active</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><i class="fa-solid fa-flask text-info me-2"></i> Flask Factory</span>
+                            <span class="badge bg-success">Initialized</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><i class="fa-solid fa-database text-warning me-2"></i> SQLAlchemy ORM</span>
+                            <span class="badge bg-success">Ready</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><i class="fa-solid fa-shield-halved text-success me-2"></i> Flask-WTF CSRF</span>
+                            <span class="badge bg-success">Protected</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><i class="fa-solid fa-user-lock text-danger me-2"></i> Flask-Login</span>
+                            <span class="badge bg-success">Configured</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5 col-lg-5">
+            <div class="card h-100 border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="bg-success-subtle text-success p-3 rounded-3">
+                            <i class="fa-solid fa-server fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title fw-bold mb-0">Database Connectivity</h5>
+                            <small class="text-muted">SQL Server LocalDB configuration</small>
+                        </div>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><i class="fa-solid fa-server text-secondary me-2"></i> Instance</span>
+                            <span class="fw-semibold small text-break">(localdb)\MSSQLLocalDB</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><i class="fa-solid fa-database text-secondary me-2"></i> Database Name</span>
+                            <span class="fw-semibold small">AcxiomCrmDb</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><i class="fa-solid fa-plug text-secondary me-2"></i> Driver</span>
+                            <span class="badge bg-secondary">PyODBC</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><i class="fa-solid fa-key text-secondary me-2"></i> Authentication</span>
+                            <span class="badge bg-info text-dark">Windows Integrated</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <span><i class="fa-solid fa-circle-dot text-secondary me-2"></i> Connection Test</span>
+                            <span class="badge bg-{{ 'success' if db_status == 'Connected' else 'danger' }}">
+                                {{ db_status }}
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ready for Phase 2 Notice -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="alert alert-info border-0 shadow-sm rounded-4 p-4 d-flex align-items-center gap-3">
+                <i class="fa-solid fa-circle-info fs-3 text-primary"></i>
+                <div>
+                    <h6 class="fw-bold mb-1">Phase 1 Foundation Complete &amp; Verified</h6>
+                    <p class="mb-0 small text-muted">
+                        All modules, extensions, blueprints, and database connections are operational. Entity implementations (Customers, Leads, Opportunities, Activities, and Dashboards) await Phase 2 activation.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

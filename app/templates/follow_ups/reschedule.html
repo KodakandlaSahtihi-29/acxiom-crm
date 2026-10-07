@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Reschedule Follow-Up #{{ follow_up.id }} - AcxiomCRM{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+    <div class="row justify-content-center">
+        <div class="col-lg-7 col-md-9">
+            <div class="card border-info shadow-sm">
+                <div class="card-header bg-info text-dark py-3 d-flex align-items-center justify-content-between">
+                    <h5 class="card-title mb-0 fw-bold">
+                        <i class="fa-solid fa-calendar-plus me-2"></i> Reschedule Follow-Up
+                    </h5>
+                    <span class="badge bg-dark text-white">#{{ follow_up.id }}</span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-light border mb-4">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <span class="badge bg-secondary me-2">{{ follow_up.follow_up_type }}</span>
+                                <strong>Currently scheduled for:</strong> {{ follow_up.follow_up_date.strftime('%A, %B %d, %Y') }}
+                            </div>
+                            {% if follow_up.is_overdue %}
+                                <span class="badge bg-danger">Overdue</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('follow_up.reschedule', id=follow_up.id) }}" novalidate>
+                        {{ form.hidden_tag() }}
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold" for="follow_up_date">
+                                New Scheduled Date <span class="text-danger">*</span>
+                            </label>
+                            {{ form.follow_up_date(class="form-control" + (" is-invalid" if form.follow_up_date.errors else ""), type="date") }}
+                            {% if form.follow_up_date.errors %}
+                                <div class="invalid-feedback">{{ form.follow_up_date.errors[0] }}</div>
+                            {% endif %}
+                            <div class="form-text small">Must be today or a future date.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold" for="remarks">
+                                Reason for Rescheduling / Updated Agenda
+                            </label>
+                            {{ form.remarks(class="form-control" + (" is-invalid" if form.remarks.errors else ""), rows=3, placeholder="Client requested later date, postponed due to budget review...") }}
+                            {% if form.remarks.errors %}
+                                <div class="invalid-feedback">{{ form.remarks.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                            <a href="{{ url_for('follow_up.details', id=follow_up.id) }}" class="btn btn-outline-secondary">
+                                <i class="fa-solid fa-xmark me-1"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-info text-dark fw-semibold px-4">
+                                <i class="fa-solid fa-calendar-check me-1"></i> Confirm Rescheduling
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

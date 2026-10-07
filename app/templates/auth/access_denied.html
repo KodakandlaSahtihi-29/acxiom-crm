@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Acxiom CRM - Access Denied (403){% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6 text-center">
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5">
+                <div class="card-body">
+                    <div class="d-inline-flex p-4 bg-danger-subtle text-danger rounded-circle mb-4">
+                        <i class="fa-solid fa-ban fs-1"></i>
+                    </div>
+
+                    <h2 class="fw-bold text-dark mb-2">Access Denied</h2>
+                    <span class="badge bg-danger px-3 py-2 rounded-pill mb-3">HTTP 403 Forbidden</span>
+
+                    <p class="text-muted mb-4">
+                        You do not possess the necessary authorization or role permissions required to access this resource.
+                    </p>
+
+                    {% if current_user.is_authenticated %}
+                        <div class="alert alert-light border text-start rounded-3 p-3 mb-4">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="small text-muted">Signed In As:</span>
+                                <span class="fw-bold small">{{ current_user.username }} ({{ current_user.full_name }})</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <span class="small text-muted">Assigned Role:</span>
+                                <span class="badge bg-secondary">{{ current_user.role }}</span>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary px-4 py-2 rounded-pill">
+                            <i class="fa-solid fa-house me-1"></i> Home
+                        </a>
+                        {% if current_user.is_authenticated %}
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary px-4 py-2 rounded-pill">
+                                <i class="fa-solid fa-gauge-high me-1"></i> My Dashboard
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('auth.login') }}" class="btn btn-primary px-4 py-2 rounded-pill">
+                                <i class="fa-solid fa-right-to-bracket me-1"></i> Sign In
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

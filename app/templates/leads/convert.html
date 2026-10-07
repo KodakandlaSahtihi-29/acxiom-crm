@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Acxiom CRM - Convert Lead - {{ lead.lead_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div>
+                    <h3 class="fw-bold mb-0">Lead Conversion Wizard</h3>
+                    <p class="text-muted small mb-0">
+                        Convert qualified lead <strong>{{ lead.lead_name }}</strong> into a Customer account and/or a pipeline Opportunity.
+                    </p>
+                </div>
+                <a href="{{ url_for('lead.details', id=lead.id) }}" class="btn btn-outline-secondary btn-sm px-3 rounded-pill">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Cancel
+                </a>
+            </div>
+
+            <!-- Lead Snapshot Card -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4 bg-light">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-dark text-uppercase small mb-3">
+                        <i class="fa-solid fa-bullseye text-primary me-1"></i> Originating Lead Details
+                    </h6>
+                    <div class="row g-2 small">
+                        <div class="col-md-3">
+                            <span class="text-muted d-block">Lead Code:</span>
+                            <strong class="font-monospace text-dark">{{ lead.lead_code }}</strong>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="text-muted d-block">Contact Name:</span>
+                            <strong class="text-dark">{{ lead.lead_name }}</strong>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="text-muted d-block">Company:</span>
+                            <strong class="text-dark">{{ lead.company_name or 'Individual' }}</strong>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="text-muted d-block">Expected Deal Value:</span>
+                            <strong class="text-success">${{ "{:,.2f}".format(lead.expected_value) }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conversion Form Card -->
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4 p-md-5">
+                    <form method="POST" action="{{ url_for('lead.convert', id=lead.id) }}" novalidate>
+                        {{ form.hidden_tag() }}
+
+                        <!-- 1. Customer Creation / Linking Section -->
+                        <div class="p-4 bg-light rounded-4 mb-4 border">
+                            <div class="form-check form-switch mb-3">
+                                {{ form.convert_to_customer(class="form-check-input", id="chkCustomer") }}
+                                <label class="form-check-label fw-bold text-dark" for="chkCustomer">
+                                    <i class="fa-solid fa-building text-primary me-1"></i> Create or Link Customer Account
+                                </label>
+                            </div>
+                            <p class="small text-muted mb-3">
+                                Promotes this prospect into a formal Customer entity. Duplicates are strictly prevented.
+                            </p>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="customer_code" class="form-label small fw-semibold">New Customer Code</label>
+                                    {{ form.customer_code(class="form-control font-monospace", placeholder="e.g. CUST-1001") }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="customer_name" class="form-label small fw-semibold">Customer / Account Name</label>
+                                    {{ form.customer_name(class="form-control", placeholder="Account Name") }}
+                                </div>
+                                <div class="col-12">
+                                    <label for="existing_customer_id" class="form-label small fw-semibold">Link to Existing Customer (Optional)</label>
+                                    {{ form.existing_customer_id(class="form-select") }}
+                                    <small class="text-muted">Select an existing account if this lead represents an existing client.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Opportunity Creation Section -->
+                        <div class="p-4 bg-light rounded-4 mb-4 border">
+                            <div class="form-check form-switch mb-3">
+                                {{ form.create_opportunity(class="form-check-input", id="chkOpportunity") }}
+                                <label class="form-check-label fw-bold text-dark" for="chkOpportunity">
+                                    <i class="fa-solid fa-sack-dollar text-success me-1"></i> Create Sales Opportunity
+                                </label>
+                            </div>
+                            <p class="small text-muted mb-3">
+                                Creates an active deal in the pipeline linked to this lead and customer.
+                            </p>
+
+                            <div class="row g-3">
+                                <div class="col-md-8">
+                                    <label for="opportunity_title" class="form-label small fw-semibold">Opportunity Title</label>
+                                    {{ form.opportunity_title(class="form-control", placeholder="e.g. Enterprise License Agreement") }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="opportunity_amount" class="form-label small fw-semibold">Opportunity Amount ($)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        {{ form.opportunity_amount(class="form-control", step="0.01") }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="opportunity_stage" class="form-label small fw-semibold">Pipeline Stage</label>
+                                    {{ form.opportunity_stage(class="form-select") }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="close_date" class="form-label small fw-semibold">Estimated Close Date</label>
+                                    {{ form.close_date(class="form-control", type="date") }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a href="{{ url_for('lead.details', id=lead.id) }}" class="btn btn-outline-secondary px-4 rounded-pill">
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success px-4 rounded-pill shadow-sm">
+                                <i class="fa-solid fa-check-double me-1"></i> Complete Conversion
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Acxiom CRM - Sales Pipeline{% endblock %}
+
+{% block extra_css %}
+<style>
+.pipeline-board {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 1.5rem;
+}
+.pipeline-col {
+    flex: 0 0 300px;
+    background-color: #f1f5f9;
+    border-radius: 1rem;
+    padding: 1rem;
+    min-height: 550px;
+}
+.pipeline-card {
+    background: #ffffff;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 0.85rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    border-left: 4px solid #94a3b8;
+}
+.pipeline-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.stage-qualification { border-left-color: #64748b; }
+.stage-proposal { border-left-color: #0284c7; }
+.stage-negotiation { border-left-color: #f59e0b; }
+.stage-won { border-left-color: #10b981; }
+.stage-lost { border-left-color: #ef4444; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+    <!-- Header & Action Bar -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <h3 class="fw-bold mb-0">Sales Pipeline Board</h3>
+                {% if is_scoped %}
+                    <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 small">
+                        <i class="fa-solid fa-filter me-1"></i> Your Scope
+                    </span>
+                {% else %}
+                    <span class="badge bg-primary-subtle text-primary border px-2 py-1 small">
+                        <i class="fa-solid fa-building me-1"></i> Organization View ({{ current_user.role }})
+                    </span>
+                {% endif %}
+            </div>
+            <p class="text-muted small mb-0">Visual pipeline flow across Qualification, Proposal, Negotiation, Won, and Lost stages.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('opportunity.index') }}" class="btn btn-outline-secondary px-3 rounded-pill">
+                <i class="fa-solid fa-table-list me-1"></i> Table View
+            </a>
+            <a href="{{ url_for('opportunity.create') }}" class="btn btn-primary px-3 rounded-pill shadow-sm">
+                <i class="fa-solid fa-plus me-1"></i> New Opportunity
+            </a>
+        </div>
+    </div>
+
+    <!-- Pipeline KPI Metrics Bar -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+                <span class="text-muted small d-block">Active Pipeline Revenue</span>
+                <h4 class="fw-bold mb-0 text-dark">${{ "{:,.2f}".format(total_active_value) }}</h4>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+                <span class="text-muted small d-block">Probability-Weighted Revenue</span>
+                <h4 class="fw-bold mb-0 text-info">${{ "{:,.2f}".format(total_active_weighted) }}</h4>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+                <span class="text-muted small d-block">Closed Won Total</span>
+                <h4 class="fw-bold mb-0 text-success">${{ "{:,.2f}".format(won_total) }}</h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales Pipeline Board Columns -->
+    <div class="pipeline-board">
+        {% for stg in stages %}
+            <div class="pipeline-col">
+                <!-- Column Header -->
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h6 class="fw-bold text-uppercase small mb-0 text-dark">
+                        {{ stg }}
+                    </h6>
+                    <span class="badge bg-secondary rounded-pill px-2 py-1">
+                        {{ stage_totals[stg]['count'] }}
+                    </span>
+                </div>
+
+                <!-- Column Subtotals -->
+                <div class="p-2 bg-white rounded-3 mb-3 small border">
+                    <div class="d-flex justify-content-between text-muted">
+                        <span>Total:</span>
+                        <strong class="text-dark">${{ "{:,.0f}".format(stage_totals[stg]['amount']) }}</strong>
+                    </div>
+                    {% if stg not in ['Won', 'Lost'] %}
+                        <div class="d-flex justify-content-between text-muted mt-1">
+                            <span>Weighted:</span>
+                            <strong class="text-info">${{ "{:,.0f}".format(stage_totals[stg]['weighted']) }}</strong>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Deal Cards in this Stage -->
+                <div class="cards-container">
+                    {% if pipeline_groups[stg] %}
+                        {% for opp in pipeline_groups[stg] %}
+                            <div class="pipeline-card stage-{{ stg|lower }}">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <span class="badge bg-light text-dark border font-monospace" style="font-size: 0.7rem;">
+                                        {{ opp.opportunity_code }}
+                                    </span>
+                                    <span class="badge bg-{{ 'success' if stg == 'Won' else ('danger' if stg == 'Lost' else 'primary-subtle text-primary') }} small">
+                                        {{ opp.probability }}%
+                                    </span>
+                                </div>
+
+                                <h6 class="fw-bold mb-1">
+                                    <a href="{{ url_for('opportunity.details', id=opp.id) }}" class="text-decoration-none text-dark">
+                                        {{ opp.opportunity_name }}
+                                    </a>
+                                </h6>
+
+                                {% if opp.customer %}
+                                    <div class="small text-muted mb-1">
+                                        <i class="fa-solid fa-building me-1 text-primary"></i>
+                                        {{ opp.customer.customer_name }}
+                                    </div>
+                                {% endif %}
+
+                                {% if opp.lead %}
+                                    <div class="small text-muted mb-1" style="font-size: 0.75rem;">
+                                        <i class="fa-solid fa-bullseye me-1 text-secondary"></i>
+                                        Lead: {{ opp.lead.lead_name }}
+                                    </div>
+                                {% endif %}
+
+                                <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                                    <div>
+                                        <div class="fw-bold text-dark fs-6">${{ "{:,.0f}".format(opp.amount) }}</div>
+                                        <small class="text-info" style="font-size: 0.72rem;">Wt: ${{ "{:,.0f}".format(opp.weighted_value) }}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <small class="text-muted d-block" style="font-size: 0.72rem;">
+                                            <i class="fa-solid fa-calendar me-1"></i>
+                                            {{ opp.expected_close_date.strftime('%b %d') if opp.expected_close_date else '—' }}
+                                        </small>
+                                        <small class="text-muted" style="font-size: 0.72rem;">
+                                            <i class="fa-solid fa-user me-1 text-secondary"></i>
+                                            {{ opp.owner.full_name if opp.owner else 'Unassigned' }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4 text-muted small">
+                            <i class="fa-solid fa-inbox text-muted opacity-25 fs-4 mb-2 d-block"></i>
+                            No deals in this stage
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Acxiom CRM - Customer Management{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Header & Action Bar -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <h3 class="fw-bold mb-0">Customer Management</h3>
+                {% if is_scoped %}
+                    <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 small">
+                        <i class="fa-solid fa-filter me-1"></i> Your Created Records (Sales Scope)
+                    </span>
+                {% else %}
+                    <span class="badge bg-primary-subtle text-primary border px-2 py-1 small">
+                        <i class="fa-solid fa-building me-1"></i> Organization Scope ({{ current_user.role }})
+                    </span>
+                {% endif %}
+            </div>
+            <p class="text-muted small mb-0">Browse, search, edit, and track customer relationships.</p>
+        </div>
+        <div>
+            <a href="{{ url_for('customer.create') }}" class="btn btn-primary px-3 rounded-pill shadow-sm">
+                <i class="fa-solid fa-user-plus me-1"></i> New Customer
+            </a>
+        </div>
+    </div>
+
+    <!-- Search & Filter Card -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-3 p-md-4">
+            <form method="GET" action="{{ url_for('customer.index') }}" class="row g-2 align-items-center">
+                <!-- Search Keyword -->
+                <div class="col-md-5 col-lg-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                        <input type="text" name="q" class="form-control border-start-0" 
+                               placeholder="Search by customer name, email, phone, code, or company..." 
+                               value="{{ search_query }}">
+                    </div>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="col-sm-6 col-md-3 col-lg-3">
+                    <select name="status" class="form-select">
+                        <option value="All" {% if not status_filter or status_filter == 'All' %}selected{% endif %}>All Statuses</option>
+                        <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
+                        <option value="Prospect" {% if status_filter == 'Prospect' %}selected{% endif %}>Prospect</option>
+                        <option value="Inactive" {% if status_filter == 'Inactive' %}selected{% endif %}>Inactive</option>
+                        <option value="Suspended" {% if status_filter == 'Suspended' %}selected{% endif %}>Suspended</option>
+                    </select>
+                </div>
+
+                <!-- Filter Actions -->
+                <div class="col-sm-6 col-md-4 col-lg-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-secondary flex-grow-1 rounded-3">
+                        <i class="fa-solid fa-filter me-1"></i> Apply
+                    </button>
+                    {% if search_query or (status_filter and status_filter != 'All') %}
+                        <a href="{{ url_for('customer.index') }}" class="btn btn-outline-secondary rounded-3" title="Clear Filters">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Customer Table Card -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4">Customer Code</th>
+                        <th>Customer Name</th>
+                        <th>Contact Info</th>
+                        <th>Company</th>
+                        <th>Status</th>
+                        <th>Created Date</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if customers %}
+                        {% for c in customers %}
+                            <tr>
+                                <td class="ps-4 fw-semibold">
+                                    <span class="badge bg-light text-dark border font-monospace">
+                                        {{ c.customer_code }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('customer.details', id=c.id) }}" class="fw-bold text-decoration-none text-dark">
+                                        {{ c.customer_name }}
+                                    </a>
+                                    {% if c.city or c.state %}
+                                        <div class="text-muted small">
+                                            <i class="fa-solid fa-location-dot me-1 text-danger"></i>
+                                            {{ c.city }}{% if c.city and c.state %}, {% endif %}{{ c.state }}
+                                        </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="small"><i class="fa-solid fa-envelope me-1 text-muted"></i> {{ c.email }}</div>
+                                    <div class="small text-muted"><i class="fa-solid fa-phone me-1 text-muted"></i> {{ c.phone }}</div>
+                                </td>
+                                <td>
+                                    <span class="text-muted small">{{ c.company_name or '—' }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if c.status == 'Active' else ('info' if c.status == 'Prospect' else ('warning text-dark' if c.status == 'Inactive' else 'danger')) }} rounded-pill px-2 py-1">
+                                        {{ c.status }}
+                                    </span>
+                                </td>
+                                <td class="text-muted small">
+                                    {{ c.created_date.strftime('%Y-%m-%d') }}
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('customer.details', id=c.id) }}" class="btn btn-outline-secondary" title="View Details">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </a>
+                                        {% if c.can_be_managed_by(current_user) %}
+                                            <a href="{{ url_for('customer.edit', id=c.id) }}" class="btn btn-outline-primary" title="Edit Customer">
+                                                <i class="fa-solid fa-pen-to-square"></i>
+                                            </a>
+                                            <a href="{{ url_for('customer.delete', id=c.id) }}" class="btn btn-outline-danger" title="Delete Customer">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <div class="mb-3">
+                                    <i class="fa-solid fa-folder-open text-muted opacity-50 display-4"></i>
+                                </div>
+                                <h6 class="fw-bold mb-1">No customers found</h6>
+                                <p class="small text-muted mb-3">
+                                    {% if search_query or status_filter %}
+                                        No matching customer records for the current filter criteria.
+                                    {% else %}
+                                        No customer records created yet in this scope.
+                                    {% endif %}
+                                </p>
+                                <a href="{{ url_for('customer.create') }}" class="btn btn-sm btn-primary rounded-pill px-3">
+                                    <i class="fa-solid fa-plus me-1"></i> Add New Customer
+                                </a>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+            <div class="card-footer bg-white border-top d-flex justify-content-between align-items-center py-3 px-4">
+                <span class="text-muted small">
+                    Showing {{ ((pagination.page - 1) * pagination.per_page) + 1 }} to {{ [pagination.page * pagination.per_page, pagination.total]|min }} of {{ pagination.total }} records
+                </span>
+                <nav aria-label="Customer listing pagination">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                            <a class="page-link" href="{{ url_for('customer.index', page=pagination.prev_num, q=search_query, status=status_filter) }}">Previous</a>
+                        </li>
+                        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                            {% if p %}
+                                <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                                    <a class="page-link" href="{{ url_for('customer.index', page=p, q=search_query, status=status_filter) }}">{{ p }}</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">…</span></li>
+                            {% endif %}
+                        {% endfor %}
+                        <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                            <a class="page-link" href="{{ url_for('customer.index', page=pagination.next_num, q=search_query, status=status_filter) }}">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

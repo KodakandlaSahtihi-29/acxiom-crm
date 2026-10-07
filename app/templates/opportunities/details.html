@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Acxiom CRM - Deal Details - {{ opp.opportunity_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+
+            <!-- Top Header & Navigation -->
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{{ url_for('opportunity.index') }}" class="btn btn-outline-secondary btn-sm rounded-circle p-2" title="Back to Deals">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </a>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h3 class="fw-bold mb-0">{{ opp.opportunity_name }}</h3>
+                            {% if opp.stage == 'Won' %}
+                                <span class="badge bg-success px-3 py-1 rounded-pill">Won</span>
+                            {% elif opp.stage == 'Lost' %}
+                                <span class="badge bg-danger px-3 py-1 rounded-pill">Lost</span>
+                            {% elif opp.stage == 'Negotiation' %}
+                                <span class="badge bg-warning text-dark px-3 py-1 rounded-pill">Negotiation</span>
+                            {% elif opp.stage == 'Proposal' %}
+                                <span class="badge bg-info text-dark px-3 py-1 rounded-pill">Proposal</span>
+                            {% else %}
+                                <span class="badge bg-secondary px-3 py-1 rounded-pill">Qualification</span>
+                            {% endif %}
+                        </div>
+                        <span class="text-muted small">
+                            Deal Code: <strong class="text-dark font-monospace">{{ opp.opportunity_code }}</strong> &bull; Status: <span class="badge bg-light text-dark border">{{ opp.status }}</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('opportunity.pipeline') }}" class="btn btn-outline-secondary px-3 rounded-pill">
+                        <i class="fa-solid fa-chart-column me-1"></i> Pipeline
+                    </a>
+                    {% if can_manage %}
+                        <a href="{{ url_for('opportunity.edit', id=opp.id) }}" class="btn btn-primary px-3 rounded-pill">
+                            <i class="fa-solid fa-pen-to-square me-1"></i> Edit
+                        </a>
+                        <a href="{{ url_for('opportunity.delete', id=opp.id) }}" class="btn btn-outline-danger px-3 rounded-pill">
+                            <i class="fa-solid fa-trash me-1"></i> Delete
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Financials & Valuation Highlights -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 bg-white text-center">
+                        <span class="text-muted small d-block">Contract Value</span>
+                        <h3 class="fw-bold mb-0 text-dark">${{ "{:,.2f}".format(opp.amount) }}</h3>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 bg-white text-center">
+                        <span class="text-muted small d-block">Win Probability</span>
+                        <h3 class="fw-bold mb-0 text-primary">{{ opp.probability }}%</h3>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 bg-white text-center">
+                        <span class="text-muted small d-block">Weighted Pipeline Value</span>
+                        <h3 class="fw-bold mb-0 text-info">${{ "{:,.2f}".format(opp.weighted_value) }}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <!-- Account & Origin Card -->
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-building text-primary"></i> Account &amp; Origin
+                            </h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Target Customer</span>
+                                    {% if opp.customer %}
+                                        <a href="{{ url_for('customer.details', id=opp.customer.id) }}" class="fw-bold text-decoration-none text-primary">
+                                            {{ opp.customer.customer_name }}
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Originating Lead</span>
+                                    {% if opp.lead %}
+                                        <a href="{{ url_for('lead.details', id=opp.lead.id) }}" class="fw-bold text-decoration-none text-secondary">
+                                            <i class="fa-solid fa-bullseye me-1"></i> {{ opp.lead.lead_name }}
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">Direct Deal</span>
+                                    {% endif %}
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Deal Source</span>
+                                    <span class="badge bg-secondary-subtle text-secondary">{{ opp.source }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Expected Close Date</span>
+                                    <span class="fw-semibold">{{ opp.expected_close_date.strftime('%Y-%m-%d') if opp.expected_close_date else '—' }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Governance & Ownership Card -->
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-user-shield text-success"></i> Governance &amp; Owner
+                            </h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Opportunity Owner</span>
+                                    <span class="fw-semibold text-dark">{{ opp.owner.full_name if opp.owner else 'Unassigned' }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Created By</span>
+                                    <span class="small">{{ opp.creator.full_name if opp.creator else 'System' }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Created Date</span>
+                                    <span class="small">{{ opp.created_date.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Pipeline Stage</span>
+                                    <span class="badge bg-light text-dark border">{{ opp.stage }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes & Deal Strategy -->
+            {% if opp.notes %}
+                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold text-dark text-uppercase small mb-2">
+                            <i class="fa-solid fa-note-sticky text-warning me-1"></i> Deal Notes &amp; Strategy
+                        </h6>
+                        <p class="mb-0 text-muted small" style="white-space: pre-wrap;">{{ opp.notes }}</p>
+                    </div>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

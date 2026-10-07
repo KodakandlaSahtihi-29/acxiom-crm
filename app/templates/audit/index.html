@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Logs - AcxiomCRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+    <!-- Top Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom flex-wrap gap-2">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-danger">Admin Only</span>
+                <span class="text-muted small">System Security &amp; Compliance</span>
+            </div>
+            <h2 class="h3 fw-bold mb-0">
+                <i class="fa-solid fa-clipboard-list text-primary me-2"></i>Audit Log Viewer
+            </h2>
+        </div>
+        <div>
+            <span class="badge bg-secondary p-2">Total Logged Events: {{ total_count }}</span>
+        </div>
+    </div>
+
+    <!-- Filters Card -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3">
+            <form method="GET" action="{{ url_for('audit.index') }}" class="row g-2 align-items-center">
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                        <input type="text" name="q" value="{{ search_query }}" class="form-control border-start-0" placeholder="Search keyword, ID, IP...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="action" class="form-select">
+                        <option value="">All Actions</option>
+                        {% for act in available_actions %}
+                            <option value="{{ act }}" {% if action_filter == act %}selected{% endif %}>{{ act }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="entity" class="form-select">
+                        <option value="">All Entities</option>
+                        {% for ent in available_entities %}
+                            <option value="{{ ent }}" {% if entity_filter == ent %}selected{% endif %}>{{ ent }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="text" name="user" value="{{ user_filter }}" class="form-control" placeholder="User name or ID...">
+                </div>
+                <div class="col-md-2 d-flex gap-1">
+                    <button type="submit" class="btn btn-primary flex-grow-1">Filter</button>
+                    {% if search_query or action_filter or entity_filter or user_filter %}
+                        <a href="{{ url_for('audit.index') }}" class="btn btn-outline-secondary" title="Clear Filters">
+                            <i class="fa-solid fa-xmark"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Audit Log Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 font-monospace small">
+                    <thead class="table-light text-uppercase font-sans-serif">
+                        <tr>
+                            <th class="ps-3" style="width: 15%;">Created Date</th>
+                            <th style="width: 12%;">User</th>
+                            <th style="width: 14%;">Action</th>
+                            <th style="width: 10%;">Entity</th>
+                            <th style="width: 7%;">Record ID</th>
+                            <th style="width: 18%;">Old Value</th>
+                            <th style="width: 18%;">New Value</th>
+                            <th class="pe-3" style="width: 6%;">IP Address</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td class="ps-3 text-nowrap">
+                                <i class="fa-regular fa-clock me-1 text-muted"></i>
+                                {{ log.created_date[:19].replace('T', ' ') if log.created_date else 'N/A' }}
+                            </td>
+                            <td>
+                                <span class="fw-bold text-dark">{{ log.user }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">
+                                    {{ log.action }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {% if log.entity_name == 'Customer' %}bg-primary{% elif log.entity_name == 'Lead' %}bg-success{% elif log.entity_name == 'Opportunity' %}bg-warning text-dark{% elif log.entity_name == 'FollowUp' %}bg-info text-dark{% elif log.entity_name == 'Activity' %}bg-secondary{% else %}bg-dark{% endif %}">
+                                    {{ log.entity_name }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if log.record_id %}
+                                    <code>#{{ log.record_id }}</code>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ log.old_value }}">
+                                {% if log.old_value %}
+                                    <span class="text-danger">{{ log.old_value }}</span>
+                                {% else %}
+                                    <span class="text-muted">None</span>
+                                {% endif %}
+                            </td>
+                            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ log.new_value }}">
+                                {% if log.new_value %}
+                                    <span class="text-success">{{ log.new_value }}</span>
+                                {% else %}
+                                    <span class="text-muted">None</span>
+                                {% endif %}
+                            </td>
+                            <td class="pe-3 text-muted text-nowrap">
+                                {{ log.ip_address }}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-clipboard-check fs-1 d-block mb-3"></i>
+                                <h5>No Audit Records Found</h5>
+                                <p class="small">No events match the current filter criteria.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if total_pages > 1 %}
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+            <span class="small text-muted">Page {{ page }} of {{ total_pages }}</span>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('audit.index', page=page-1, q=search_query, action=action_filter, entity=entity_filter, user=user_filter) }}">Previous</a>
+                </li>
+                <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('audit.index', page=page+1, q=search_query, action=action_filter, entity=entity_filter, user=user_filter) }}">Next</a>
+                </li>
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

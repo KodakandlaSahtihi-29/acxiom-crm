@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Acxiom CRM - Lead Details - {{ lead.lead_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+
+            <!-- Top Header & Navigation -->
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{{ url_for('lead.index') }}" class="btn btn-outline-secondary btn-sm rounded-circle p-2" title="Back to Leads">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </a>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h3 class="fw-bold mb-0">{{ lead.lead_name }}</h3>
+                            {% if lead.status == 'New' %}
+                                <span class="badge bg-primary-subtle text-primary border border-primary px-3 py-1 rounded-pill">New</span>
+                            {% elif lead.status == 'Contacted' %}
+                                <span class="badge bg-info-subtle text-info border border-info px-3 py-1 rounded-pill">Contacted</span>
+                            {% elif lead.status == 'Qualified' %}
+                                <span class="badge bg-warning-subtle text-warning border border-warning px-3 py-1 rounded-pill">Qualified</span>
+                            {% elif lead.status == 'Converted' %}
+                                <span class="badge bg-success-subtle text-success border border-success px-3 py-1 rounded-pill">
+                                    <i class="fa-solid fa-check me-1"></i> Converted
+                                </span>
+                            {% elif lead.status == 'Lost' %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger px-3 py-1 rounded-pill">Lost</span>
+                            {% else %}
+                                <span class="badge bg-secondary px-3 py-1 rounded-pill">{{ lead.status }}</span>
+                            {% endif %}
+                        </div>
+                        <span class="text-muted small">
+                            Lead Code: <strong class="text-dark font-monospace">{{ lead.lead_code }}</strong> &bull; Expected Value: <strong>${{ "{:,.2f}".format(lead.expected_value) }}</strong>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex gap-2">
+                    {% if can_convert and can_manage %}
+                        <a href="{{ url_for('lead.convert', id=lead.id) }}" class="btn btn-success px-3 rounded-pill shadow-sm">
+                            <i class="fa-solid fa-arrow-right-arrow-left me-1"></i> Convert Lead
+                        </a>
+                    {% endif %}
+                    {% if can_manage %}
+                        <a href="{{ url_for('lead.edit', id=lead.id) }}" class="btn btn-primary px-3 rounded-pill">
+                            <i class="fa-solid fa-pen-to-square me-1"></i> Edit
+                        </a>
+                        <a href="{{ url_for('lead.delete', id=lead.id) }}" class="btn btn-outline-danger px-3 rounded-pill">
+                            <i class="fa-solid fa-trash me-1"></i> Delete
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Pipeline Workflow Visualizer -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h6 class="text-muted small text-uppercase fw-bold mb-3">Lead Progression Workflow</h6>
+                    <div class="d-flex justify-content-between position-relative">
+                        <div class="text-center flex-fill">
+                            <div class="badge rounded-circle p-3 mb-1 {{ 'bg-primary text-white' if lead.status in ['New', 'Contacted', 'Qualified', 'Converted'] else 'bg-light text-muted border' }}">
+                                <i class="fa-solid fa-sparkles"></i>
+                            </div>
+                            <div class="small fw-semibold">New</div>
+                        </div>
+                        <div class="text-center flex-fill">
+                            <div class="badge rounded-circle p-3 mb-1 {{ 'bg-primary text-white' if lead.status in ['Contacted', 'Qualified', 'Converted'] else 'bg-light text-muted border' }}">
+                                <i class="fa-solid fa-phone"></i>
+                            </div>
+                            <div class="small fw-semibold">Contacted</div>
+                        </div>
+                        <div class="text-center flex-fill">
+                            <div class="badge rounded-circle p-3 mb-1 {{ 'bg-primary text-white' if lead.status in ['Qualified', 'Converted'] else 'bg-light text-muted border' }}">
+                                <i class="fa-solid fa-star"></i>
+                            </div>
+                            <div class="small fw-semibold">Qualified</div>
+                        </div>
+                        <div class="text-center flex-fill">
+                            <div class="badge rounded-circle p-3 mb-1 {{ 'bg-success text-white' if lead.status == 'Converted' else ('bg-danger text-white' if lead.status in ['Lost', 'Unqualified'] else 'bg-light text-muted border') }}">
+                                <i class="fa-solid fa-award"></i>
+                            </div>
+                            <div class="small fw-semibold">{{ lead.status if lead.status in ['Converted', 'Lost', 'Unqualified'] else 'Converted' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Converted Notice (If already converted) -->
+            {% if lead.is_converted() %}
+                <div class="alert alert-success border-0 shadow-sm rounded-4 p-4 mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="p-3 bg-success text-white rounded-circle">
+                            <i class="fa-solid fa-check-double fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1">Converted CRM Record</h5>
+                            <p class="mb-0 small text-muted">
+                                This lead was successfully converted on 
+                                <strong>{{ lead.converted_date.strftime('%Y-%m-%d %H:%M UTC') if lead.converted_date else 'Recent' }}</strong>.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        {% if lead.converted_customer_id %}
+                            <a href="{{ url_for('customer.details', id=lead.converted_customer_id) }}" class="btn btn-outline-success btn-sm rounded-pill px-3">
+                                <i class="fa-solid fa-building me-1"></i> View Customer
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="row g-4 mb-4">
+                <!-- Prospect & Company Card -->
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-address-card text-primary"></i> Prospect Info
+                            </h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Company</span>
+                                    <span class="fw-semibold">{{ lead.company_name or '—' }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Email</span>
+                                    {% if lead.email %}
+                                        <a href="mailto:{{ lead.email }}" class="text-decoration-none fw-semibold">{{ lead.email }}</a>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Phone</span>
+                                    {% if lead.phone %}
+                                        <a href="tel:{{ lead.phone }}" class="text-decoration-none fw-semibold">{{ lead.phone }}</a>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Lead Source</span>
+                                    <span class="badge bg-secondary-subtle text-secondary">{{ lead.source }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assignment & Deal Value Card -->
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-sack-dollar text-success"></i> Pipeline &amp; Assignment
+                            </h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Expected Value</span>
+                                    <span class="fw-bold text-success fs-5">${{ "{:,.2f}".format(lead.expected_value) }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Assigned Representative</span>
+                                    <span class="fw-semibold">{{ lead.assignee.full_name if lead.assignee else 'Unassigned' }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Lead Creator</span>
+                                    <span class="small">{{ lead.creator.full_name if lead.creator else 'System' }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Created Date</span>
+                                    <span class="small">{{ lead.created_date.strftime('%Y-%m-%d %H:%M') }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

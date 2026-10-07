@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}{{ activity.subject }} - Activity Details - AcxiomCRM{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+    <!-- Breadcrumb & Top Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <a href="{{ url_for('activity.index') }}" class="text-decoration-none text-muted small">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Activity Management
+                </a>
+                <span class="text-muted small">/</span>
+                {% if activity.activity_type == 'Call' %}
+                    <a href="{{ url_for('activity.calls') }}" class="text-decoration-none text-muted small">Calls</a>
+                {% elif activity.activity_type == 'Meeting' %}
+                    <a href="{{ url_for('activity.meetings') }}" class="text-decoration-none text-muted small">Meetings</a>
+                {% elif activity.activity_type == 'Email' %}
+                    <a href="{{ url_for('activity.emails') }}" class="text-decoration-none text-muted small">Emails</a>
+                {% elif activity.activity_type == 'Task' %}
+                    <a href="{{ url_for('activity.tasks') }}" class="text-decoration-none text-muted small">Tasks</a>
+                {% endif %}
+                <span class="text-muted small">/</span>
+                <span class="small fw-semibold">Activity #{{ activity.id }}</span>
+            </div>
+            <h2 class="h3 fw-bold mb-0 d-flex align-items-center gap-2">
+                <span class="badge {% if activity.activity_type == 'Call' %}bg-primary{% elif activity.activity_type == 'Meeting' %}bg-purple bg-indigo text-white{% elif activity.activity_type == 'Email' %}bg-info text-dark{% else %}bg-secondary{% endif %}">
+                    {% if activity.activity_type == 'Call' %}<i class="fa-solid fa-phone me-1"></i>
+                    {% elif activity.activity_type == 'Meeting' %}<i class="fa-solid fa-handshake me-1"></i>
+                    {% elif activity.activity_type == 'Email' %}<i class="fa-solid fa-envelope me-1"></i>
+                    {% else %}<i class="fa-solid fa-list-check me-1"></i>{% endif %}
+                    {{ activity.activity_type }}
+                </span>
+                <span>{{ activity.subject }}</span>
+            </h2>
+        </div>
+        <div class="d-flex gap-2">
+            {% if can_manage %}
+                {% if activity.status == 'Pending' %}
+                    <a href="{{ url_for('activity.complete', id=activity.id) }}" class="btn btn-success">
+                        <i class="fa-solid fa-check me-1"></i> Complete
+                    </a>
+                    <a href="{{ url_for('activity.cancel', id=activity.id) }}" class="btn btn-outline-warning text-dark">
+                        <i class="fa-solid fa-ban me-1"></i> Cancel
+                    </a>
+                {% endif %}
+                <a href="{{ url_for('activity.edit', id=activity.id) }}" class="btn btn-outline-primary">
+                    <i class="fa-solid fa-pen me-1"></i> Edit
+                </a>
+                <a href="{{ url_for('activity.delete', id=activity.id) }}" class="btn btn-outline-danger">
+                    <i class="fa-solid fa-trash me-1"></i> Delete
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Details Card -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">Activity Information</h5>
+                    <div>
+                        {% if activity.status == 'Completed' %}
+                            <span class="badge bg-success fs-6"><i class="fa-solid fa-circle-check me-1"></i>Completed</span>
+                        {% elif activity.status == 'Pending' %}
+                            <span class="badge bg-warning text-dark fs-6"><i class="fa-solid fa-hourglass-half me-1"></i>Pending</span>
+                        {% elif activity.status == 'Cancelled' %}
+                            <span class="badge bg-secondary fs-6"><i class="fa-solid fa-ban me-1"></i>Cancelled</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-semibold">Activity Type</label>
+                            <div class="fs-5 fw-bold text-dark">{{ activity.activity_type }}</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-semibold">Status</label>
+                            <div class="fs-5 fw-bold">
+                                {% if activity.status == 'Completed' %}
+                                    <span class="text-success"><i class="fa-solid fa-check-circle me-1"></i>Completed</span>
+                                {% elif activity.status == 'Pending' %}
+                                    <span class="text-warning"><i class="fa-solid fa-clock me-1"></i>Pending</span>
+                                {% elif activity.status == 'Cancelled' %}
+                                    <span class="text-muted"><i class="fa-solid fa-ban me-1"></i>Cancelled</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-semibold">Activity Date</label>
+                            <div class="fs-5 fw-semibold text-dark">
+                                <i class="fa-regular fa-calendar me-1 text-muted"></i>
+                                {{ activity.activity_date.strftime('%A, %B %d, %Y') }}
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-semibold">Assigned Representative</label>
+                            <div class="fs-5 fw-semibold text-dark">
+                                <i class="fa-solid fa-user-circle me-1 text-primary"></i>
+                                {{ activity.assignee.full_name if activity.assignee else 'Unassigned' }}
+                                {% if activity.assignee %}
+                                    <span class="badge bg-light text-secondary border ms-1">{{ activity.assignee.role }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="text-muted small text-uppercase fw-semibold mb-1">Subject</label>
+                        <div class="p-3 bg-light rounded border fw-semibold text-dark fs-5">
+                            {{ activity.subject }}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="text-muted small text-uppercase fw-semibold mb-1">Description / Notes</label>
+                        <div class="p-3 bg-light rounded border text-secondary" style="min-height: 80px; white-space: pre-wrap;">{{ activity.description or 'No description provided.' }}</div>
+                    </div>
+
+                    {% if activity.status == 'Completed' %}
+                    <div class="alert alert-success border-success mb-3">
+                        <div class="fw-bold mb-1"><i class="fa-solid fa-circle-check me-2"></i>Completion Details</div>
+                        <p class="mb-1 small"><strong>Completed Date:</strong> {{ activity.completed_date.strftime('%Y-%m-%d %H:%M UTC') if activity.completed_date else 'Recorded' }}</p>
+                        {% if activity.completion_remarks %}
+                            <p class="mb-0 small"><strong>Remarks / Outcome:</strong> {{ activity.completion_remarks }}</p>
+                        {% endif %}
+                    </div>
+                    {% elif activity.status == 'Cancelled' %}
+                    <div class="alert alert-secondary border mb-3">
+                        <div class="fw-bold mb-1"><i class="fa-solid fa-ban me-2"></i>Cancellation Details</div>
+                        <p class="mb-0 small"><strong>Reason:</strong> {{ activity.cancellation_reason or 'No cancellation reason specified.' }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar / Linked Entities -->
+        <div class="col-lg-4">
+            <!-- Linked Customer -->
+            {% if activity.customer %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h6 class="fw-bold mb-0 text-primary">
+                        <i class="fa-solid fa-building me-1"></i> Associated Customer
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h5 class="fw-bold mb-1">
+                        <a href="{{ url_for('customer.details', id=activity.customer.id) }}" class="text-decoration-none">
+                            {{ activity.customer.customer_name }}
+                        </a>
+                    </h5>
+                    <p class="text-muted small mb-2">{{ activity.customer.company_name or 'N/A' }}</p>
+                    <div class="small mb-1">
+                        <i class="fa-solid fa-envelope me-2 text-muted"></i>
+                        <a href="mailto:{{ activity.customer.email }}" class="text-decoration-none">{{ activity.customer.email }}</a>
+                    </div>
+                    {% if activity.customer.phone %}
+                    <div class="small mb-3">
+                        <i class="fa-solid fa-phone me-2 text-muted"></i>
+                        {{ activity.customer.phone }}
+                    </div>
+                    {% endif %}
+                    <a href="{{ url_for('customer.details', id=activity.customer.id) }}" class="btn btn-outline-primary btn-sm w-100">
+                        View Customer Record
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Linked Lead -->
+            {% if activity.lead %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h6 class="fw-bold mb-0 text-success">
+                        <i class="fa-solid fa-filter-circle-dollar me-1"></i> Associated Lead
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h5 class="fw-bold mb-1">
+                        <a href="{{ url_for('lead.details', id=activity.lead.id) }}" class="text-decoration-none">
+                            {{ activity.lead.lead_name }}
+                        </a>
+                    </h5>
+                    <p class="text-muted small mb-2">{{ activity.lead.company_name or 'N/A' }}</p>
+                    <div class="small mb-1">
+                        <i class="fa-solid fa-envelope me-2 text-muted"></i>
+                        <a href="mailto:{{ activity.lead.email }}" class="text-decoration-none">{{ activity.lead.email }}</a>
+                    </div>
+                    {% if activity.lead.phone %}
+                    <div class="small mb-2">
+                        <i class="fa-solid fa-phone me-2 text-muted"></i>
+                        {{ activity.lead.phone }}
+                    </div>
+                    {% endif %}
+                    <div class="small mb-3">
+                        <span class="badge bg-secondary">{{ activity.lead.status }}</span>
+                    </div>
+                    <a href="{{ url_for('lead.details', id=activity.lead.id) }}" class="btn btn-outline-success btn-sm w-100">
+                        View Lead Record
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if not activity.customer and not activity.lead %}
+            <div class="card border-0 shadow-sm mb-4 text-center p-4">
+                <div class="text-muted mb-2"><i class="fa-solid fa-link-slash fa-2x"></i></div>
+                <h6 class="fw-semibold">No Entity Linked</h6>
+                <p class="small text-muted mb-0">This activity is general or internal and is not currently linked to a specific customer or lead.</p>
+            </div>
+            {% endif %}
+
+            <!-- Metadata Card -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h6 class="fw-bold mb-0 text-muted">Metadata & History</h6>
+                </div>
+                <div class="card-body small">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Activity ID:</span>
+                        <span class="fw-semibold">#{{ activity.id }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Created Date:</span>
+                        <span class="fw-semibold">{{ activity.created_date.strftime('%Y-%m-%d %H:%M') if activity.created_date else 'N/A' }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Created By:</span>
+                        <span class="fw-semibold">{{ activity.creator.full_name if activity.creator else 'System' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

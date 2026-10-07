@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}Acxiom CRM - Create Opportunity{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <h3 class="fw-bold mb-0">Create Opportunity</h3>
+                    <p class="text-muted small mb-0">Open a new sales deal in the Acxiom CRM pipeline.</p>
+                </div>
+                <a href="{{ url_for('opportunity.index') }}" class="btn btn-outline-secondary btn-sm px-3 rounded-pill">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Back to Deals
+                </a>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4 p-md-5">
+                    <form method="POST" action="{{ url_for('opportunity.create') }}" novalidate>
+                        {{ form.hidden_tag() }}
+
+                        <!-- Primary Opportunity Details -->
+                        <h6 class="text-primary fw-bold text-uppercase small mb-3">
+                            <i class="fa-solid fa-tag me-1"></i> Deal Identification
+                        </h6>
+
+                        <div class="row g-3 mb-4">
+                            <!-- Opportunity Code -->
+                            <div class="col-md-4">
+                                <label for="opportunity_code" class="form-label fw-semibold small">
+                                    Opportunity Code <span class="text-danger">*</span>
+                                </label>
+                                {{ form.opportunity_code(
+                                    class="form-control font-monospace" + (" is-invalid" if form.opportunity_code.errors else ""),
+                                    placeholder="e.g. OPP-1001",
+                                    maxlength="50",
+                                    required=True
+                                ) }}
+                                {% for error in form.opportunity_code.errors %}
+                                    <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Opportunity Name -->
+                            <div class="col-md-8">
+                                <label for="opportunity_name" class="form-label fw-semibold small">
+                                    Opportunity Name <span class="text-danger">*</span>
+                                </label>
+                                {{ form.opportunity_name(
+                                    class="form-control" + (" is-invalid" if form.opportunity_name.errors else ""),
+                                    placeholder="e.g. Enterprise Cloud Migration",
+                                    maxlength="150",
+                                    required=True,
+                                    autofocus=True
+                                ) }}
+                                {% for error in form.opportunity_name.errors %}
+                                    <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Account & Originating Source -->
+                        <h6 class="text-primary fw-bold text-uppercase small mb-3">
+                            <i class="fa-solid fa-building me-1"></i> Account &amp; Origin
+                        </h6>
+
+                        <div class="row g-3 mb-4">
+                            <!-- Customer -->
+                            <div class="col-md-6">
+                                <label for="customer_id" class="form-label fw-semibold small">
+                                    Customer / Account <span class="text-danger">*</span>
+                                </label>
+                                {{ form.customer_id(class="form-select" + (" is-invalid" if form.customer_id.errors else "")) }}
+                                {% for error in form.customer_id.errors %}
+                                    <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Originating Lead -->
+                            <div class="col-md-6">
+                                <label for="lead_id" class="form-label fw-semibold small">Originating Lead (Optional)</label>
+                                {{ form.lead_id(class="form-select" + (" is-invalid" if form.lead_id.errors else "")) }}
+                                {% for error in form.lead_id.errors %}
+                                    <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Valuation & Pipeline Stage -->
+                        <h6 class="text-primary fw-bold text-uppercase small mb-3">
+                            <i class="fa-solid fa-chart-line me-1"></i> Financials &amp; Stage
+                        </h6>
+
+                        <div class="row g-3 mb-4">
+                            <!-- Amount -->
+                            <div class="col-md-4">
+                                <label for="amount" class="form-label fw-semibold small">
+                                    Deal Amount ($) <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">$</span>
+                                    {{ form.amount(
+                                        class="form-control" + (" is-invalid" if form.amount.errors else ""),
+                                        placeholder="0.00",
+                                        step="0.01",
+                                        required=True
+                                    ) }}
+                                </div>
+                                {% for error in form.amount.errors %}
+                                    <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Probability -->
+                            <div class="col-md-4">
+                                <label for="probability" class="form-label fw-semibold small">
+                                    Win Probability (%) <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    {{ form.probability(
+                                        class="form-control" + (" is-invalid" if form.probability.errors else ""),
+                                        min="0",
+                                        max="100",
+                                        required=True
+                                    ) }}
+                                    <span class="input-group-text bg-light">%</span>
+                                </div>
+                                {% for error in form.probability.errors %}
+                                    <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Stage -->
+                            <div class="col-md-4">
+                                <label for="stage" class="form-label fw-semibold small">Pipeline Stage</label>
+                                {{ form.stage(class="form-select" + (" is-invalid" if form.stage.errors else "")) }}
+                                {% for error in form.stage.errors %}
+                                    <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Status -->
+                            <div class="col-md-4">
+                                <label for="status" class="form-label fw-semibold small">Opportunity Status</label>
+                                {{ form.status(class="form-select" + (" is-invalid" if form.status.errors else "")) }}
+                                {% for error in form.status.errors %}
+                                    <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Expected Close Date -->
+                            <div class="col-md-4">
+                                <label for="expected_close_date" class="form-label fw-semibold small">
+                                    Expected Close Date <span class="text-danger">*</span>
+                                </label>
+                                {{ form.expected_close_date(
+                                    class="form-control" + (" is-invalid" if form.expected_close_date.errors else ""),
+                                    type="date",
+                                    required=True
+                                ) }}
+                                {% for error in form.expected_close_date.errors %}
+                                    <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Source -->
+                            <div class="col-md-4">
+                                <label for="source" class="form-label fw-semibold small">Source</label>
+                                {{ form.source(class="form-select" + (" is-invalid" if form.source.errors else "")) }}
+                                {% for error in form.source.errors %}
+                                    <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Assigned To -->
+                            <div class="col-md-12">
+                                <label for="assigned_to" class="form-label fw-semibold small">Opportunity Owner</label>
+                                {{ form.assigned_to(class="form-select" + (" is-invalid" if form.assigned_to.errors else "")) }}
+                                {% for error in form.assigned_to.errors %}
+                                    <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Notes -->
+                            <div class="col-12">
+                                <label for="notes" class="form-label fw-semibold small">Notes &amp; Deal Strategy</label>
+                                {{ form.notes(class="form-control", rows="3", placeholder="Strategic deal milestones, competition, requirements...") }}
+                                {% for error in form.notes.errors %}
+                                    <div class="text-danger small mt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                            <a href="{{ url_for('opportunity.index') }}" class="btn btn-outline-secondary px-4 rounded-pill">
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4 rounded-pill shadow-sm">
+                                <i class="fa-solid fa-save me-1"></i> Save Opportunity
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

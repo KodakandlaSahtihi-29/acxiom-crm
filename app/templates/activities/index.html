@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if type_title %}{{ type_title }} Activities{% else %}Activity Management{% endif %} - AcxiomCRM
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <h2 class="h3 fw-bold mb-1">
+                <i class="fa-solid fa-list-check text-primary me-2"></i>
+                {% if type_title %}
+                    {{ type_title }} Activities
+                {% else %}
+                    Activity Management
+                {% endif %}
+            </h2>
+            <p class="text-muted small mb-0">Record, track, and manage Calls, Meetings, Emails, and Tasks across your accounts and prospects.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <div class="btn-group">
+                <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fa-solid fa-plus me-1"></i> Log Activity
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow">
+                    <li><a class="dropdown-item" href="{{ url_for('activity.create', type='Call') }}"><i class="fa-solid fa-phone text-primary me-2"></i>Log Call</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('activity.create', type='Meeting') }}"><i class="fa-solid fa-users text-info me-2"></i>Log Meeting</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('activity.create', type='Email') }}"><i class="fa-solid fa-envelope text-warning me-2"></i>Log Email</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('activity.create', type='Task') }}"><i class="fa-solid fa-check-double text-success me-2"></i>Create Task</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mandatory Module Tree Nav Tabs -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-2">
+            <ul class="nav nav-pills gap-2">
+                <li class="nav-item">
+                    <a class="nav-link {% if active_view == 'all' %}active{% endif %}" href="{{ url_for('activity.index') }}">
+                        <i class="fa-solid fa-layer-group me-1"></i> All Activities ({{ total_count }})
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_view == 'calls' %}active{% endif %}" href="{{ url_for('activity.calls') }}">
+                        <i class="fa-solid fa-phone me-1"></i> Calls ({{ calls_count }})
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_view == 'meetings' %}active{% endif %}" href="{{ url_for('activity.meetings') }}">
+                        <i class="fa-solid fa-users me-1"></i> Meetings ({{ meetings_count }})
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_view == 'emails' %}active{% endif %}" href="{{ url_for('activity.emails') }}">
+                        <i class="fa-solid fa-envelope me-1"></i> Emails ({{ emails_count }})
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_view == 'tasks' %}active{% endif %}" href="{{ url_for('activity.tasks') }}">
+                        <i class="fa-solid fa-check-double me-1"></i> Tasks ({{ tasks_count }})
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3">
+            <form method="GET" action="{{ request.path }}" class="row g-2 align-items-center">
+                <div class="col-lg-4 col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                        <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Search subject, description, customer, lead...">
+                    </div>
+                </div>
+
+                {% if active_view == 'all' %}
+                <div class="col-lg-2 col-md-3">
+                    <select name="type" class="form-select">
+                        <option value="">— All Types —</option>
+                        {% for t in ActivityType.ALL_TYPES %}
+                            <option value="{{ t }}" {% if type_filter == t %}selected{% endif %}>{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                <div class="col-lg-2 col-md-3">
+                    <select name="status" class="form-select">
+                        <option value="">— All Statuses —</option>
+                        {% for s in ActivityStatus.ALL_STATUSES %}
+                            <option value="{{ s }}" {% if status_filter == s %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-3">
+                    <select name="date_filter" class="form-select">
+                        <option value="">— All Dates —</option>
+                        <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+                        <option value="upcoming" {% if date_filter == 'upcoming' %}selected{% endif %}>Upcoming</option>
+                        <option value="past" {% if date_filter == 'past' %}selected{% endif %}>Past</option>
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-3 d-flex gap-1">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fa-solid fa-filter me-1"></i> Filter
+                    </button>
+                    {% if search_query or type_filter or status_filter or date_filter %}
+                        <a href="{{ request.path }}" class="btn btn-outline-secondary" title="Reset">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Activities Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 70px;">ID</th>
+                        <th>Type</th>
+                        <th>Subject</th>
+                        <th>Activity Date</th>
+                        <th>Customer / Lead</th>
+                        <th>Assigned To</th>
+                        <th>Status</th>
+                        <th class="text-end" style="width: 200px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if activities %}
+                        {% for a in activities %}
+                        <tr class="{% if a.is_overdue %}table-danger bg-opacity-25{% elif a.is_today %}table-warning bg-opacity-25{% endif %}">
+                            <td class="fw-semibold text-muted">#{{ a.id }}</td>
+                            <td>
+                                <span class="badge {% if a.activity_type == 'Call' %}bg-primary{% elif a.activity_type == 'Meeting' %}bg-purple bg-indigo text-white{% elif a.activity_type == 'Email' %}bg-warning text-dark{% else %}bg-success text-white{% endif %}">
+                                    {% if a.activity_type == 'Call' %}<i class="fa-solid fa-phone me-1"></i>
+                                    {% elif a.activity_type == 'Meeting' %}<i class="fa-solid fa-users me-1"></i>
+                                    {% elif a.activity_type == 'Email' %}<i class="fa-solid fa-envelope me-1"></i>
+                                    {% else %}<i class="fa-solid fa-check-double me-1"></i>{% endif %}
+                                    {{ a.activity_type }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">{{ a.subject }}</div>
+                                {% if a.description %}
+                                    <small class="text-muted text-truncate d-block" style="max-width: 320px;" title="{{ a.description }}">
+                                        {{ a.description }}
+                                    </small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div><strong>{{ a.activity_date.strftime('%Y-%m-%d') }}</strong></div>
+                                {% if a.is_overdue %}
+                                    <span class="badge bg-danger text-white"><i class="fa-solid fa-triangle-exclamation me-1"></i>Overdue</span>
+                                {% elif a.is_today %}
+                                    <span class="badge bg-warning text-dark"><i class="fa-solid fa-clock me-1"></i>Today</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if a.customer %}
+                                    <div>
+                                        <i class="fa-solid fa-building text-primary me-1"></i>
+                                        <a href="{{ url_for('customer.details', id=a.customer.id) }}" class="text-decoration-none fw-semibold">
+                                            {{ a.customer.customer_name }}
+                                        </a>
+                                    </div>
+                                {% endif %}
+                                {% if a.lead %}
+                                    <div>
+                                        <i class="fa-solid fa-bullseye text-success me-1"></i>
+                                        <a href="{{ url_for('lead.details', id=a.lead.id) }}" class="text-decoration-none fw-semibold">
+                                            {{ a.lead.lead_name }}
+                                        </a>
+                                    </div>
+                                {% endif %}
+                                {% if not a.customer and not a.lead %}
+                                    <span class="text-muted small fst-italic">General Activity</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <i class="fa-solid fa-user-circle text-muted me-1"></i>
+                                {{ a.assigned_user.full_name if a.assigned_user else 'Unassigned' }}
+                            </td>
+                            <td>
+                                {% if a.status == 'Completed' %}
+                                    <span class="badge bg-success"><i class="fa-solid fa-check me-1"></i>Completed</span>
+                                {% elif a.status == 'Pending' %}
+                                    <span class="badge bg-warning text-dark"><i class="fa-solid fa-hourglass-start me-1"></i>Pending</span>
+                                {% elif a.status == 'Cancelled' %}
+                                    <span class="badge bg-danger"><i class="fa-solid fa-ban me-1"></i>Cancelled</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ a.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('activity.details', id=a.id) }}" class="btn btn-outline-secondary" title="View Details">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                    {% if a.status == 'Pending' %}
+                                        <a href="{{ url_for('activity.complete', id=a.id) }}" class="btn btn-outline-success" title="Mark Completed">
+                                            <i class="fa-solid fa-check"></i>
+                                        </a>
+                                        <a href="{{ url_for('activity.cancel', id=a.id) }}" class="btn btn-outline-warning text-dark" title="Cancel">
+                                            <i class="fa-solid fa-ban"></i>
+                                        </a>
+                                    {% endif %}
+                                    <a href="{{ url_for('activity.edit', id=a.id) }}" class="btn btn-outline-primary" title="Edit">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-calendar-xmark fs-1 opacity-50 mb-3 d-block"></i>
+                                <h5>No activities found</h5>
+                                <p class="small mb-3">Record client touchpoints, meetings, calls, or follow-up tasks.</p>
+                                <a href="{{ url_for('activity.create') }}" class="btn btn-primary btn-sm">
+                                    <i class="fa-solid fa-plus me-1"></i> Create Activity
+                                </a>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if pagination and pagination.pages > 1 %}
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2">
+            <span class="text-muted small">
+                Showing {{ pagination.items | length }} of {{ pagination.total }} items (Page {{ pagination.page }} of {{ pagination.pages }})
+            </span>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.prev_num, q=search_query, type=type_filter, status=status_filter, date_filter=date_filter) }}">Previous</a>
+                </li>
+                {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if p %}
+                        <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for(request.endpoint, page=p, q=search_query, type=type_filter, status=status_filter, date_filter=date_filter) }}">{{ p }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">…</span></li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for(request.endpoint, page=pagination.next_num, q=search_query, type=type_filter, status=status_filter, date_filter=date_filter) }}">Next</a>
+                </li>
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

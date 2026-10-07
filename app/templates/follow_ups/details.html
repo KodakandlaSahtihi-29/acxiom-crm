@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Follow-Up #{{ follow_up.id }} Details - AcxiomCRM{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+    <!-- Breadcrumb & Top Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <a href="{{ url_for('follow_up.index') }}" class="text-decoration-none text-muted small">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Follow-Ups
+                </a>
+                <span class="text-muted small">/</span>
+                <span class="small fw-semibold">Follow-Up #{{ follow_up.id }}</span>
+            </div>
+            <h2 class="h3 fw-bold mb-0">
+                <span class="badge {% if follow_up.follow_up_type == 'Call' %}bg-primary{% elif follow_up.follow_up_type == 'Meeting' %}bg-purple bg-indigo text-white{% elif follow_up.follow_up_type == 'Email' %}bg-info text-dark{% else %}bg-secondary{% endif %} me-2">
+                    {{ follow_up.follow_up_type }}
+                </span>
+                Scheduled for {{ follow_up.follow_up_date.strftime('%B %d, %Y') }}
+            </h2>
+        </div>
+        <div class="d-flex gap-2">
+            {% if can_manage %}
+                {% if follow_up.status in ['Pending', 'Rescheduled'] %}
+                    <a href="{{ url_for('follow_up.complete', id=follow_up.id) }}" class="btn btn-success">
+                        <i class="fa-solid fa-check me-1"></i> Complete
+                    </a>
+                    <a href="{{ url_for('follow_up.reschedule', id=follow_up.id) }}" class="btn btn-outline-info">
+                        <i class="fa-solid fa-calendar-plus me-1"></i> Reschedule
+                    </a>
+                    <form method="POST" action="{{ url_for('follow_up.mark_missed', id=follow_up.id) }}" class="d-inline" onsubmit="return confirm('Mark this follow-up as missed?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-warning text-dark">
+                            <i class="fa-solid fa-clock-rotate-left me-1"></i> Mark Missed
+                        </button>
+                    </form>
+                {% endif %}
+                <a href="{{ url_for('follow_up.edit', id=follow_up.id) }}" class="btn btn-outline-primary">
+                    <i class="fa-solid fa-pen me-1"></i> Edit
+                </a>
+                <a href="{{ url_for('follow_up.delete', id=follow_up.id) }}" class="btn btn-outline-danger">
+                    <i class="fa-solid fa-trash me-1"></i> Delete
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Overdue / Alert Banner -->
+    {% if follow_up.is_overdue %}
+    <div class="alert alert-danger d-flex align-items-center mb-4 shadow-sm" role="alert">
+        <i class="fa-solid fa-triangle-exclamation fs-3 me-3"></i>
+        <div>
+            <strong>Action Overdue:</strong> This follow-up was scheduled for {{ follow_up.follow_up_date.strftime('%Y-%m-%d') }} and is currently overdue. Please contact the client and record the outcome or reschedule.
+        </div>
+    </div>
+    {% elif follow_up.is_today %}
+    <div class="alert alert-warning d-flex align-items-center mb-4 shadow-sm" role="alert">
+        <i class="fa-solid fa-bell fs-3 me-3 text-warning"></i>
+        <div>
+            <strong>Due Today:</strong> This follow-up activity is scheduled for today. Complete the interaction and update status upon conclusion.
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        <!-- Main Details Card -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="fw-bold mb-0">Follow-Up Information</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-semibold">Activity Type</label>
+                            <div class="fs-5 fw-bold">{{ follow_up.follow_up_type }}</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-semibold">Status</label>
+                            <div>
+                                {% if follow_up.status == 'Completed' %}
+                                    <span class="badge bg-success fs-6"><i class="fa-solid fa-check me-1"></i>Completed</span>
+                                {% elif follow_up.status == 'Pending' %}
+                                    <span class="badge bg-warning text-dark fs-6"><i class="fa-solid fa-hourglass-start me-1"></i>Pending</span>
+                                {% elif follow_up.status == 'Rescheduled' %}
+                                    <span class="badge bg-info text-dark fs-6"><i class="fa-solid fa-arrows-rotate me-1"></i>Rescheduled</span>
+                                {% elif follow_up.status == 'Missed' %}
+                                    <span class="badge bg-danger fs-6"><i class="fa-solid fa-xmark me-1"></i>Missed</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-semibold">Scheduled Date</label>
+                            <div class="fs-5 fw-semibold">{{ follow_up.follow_up_date.strftime('%A, %B %d, %Y') }}</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-semibold">Assigned Representative</label>
+                            <div class="fs-5 fw-semibold">
+                                <i class="fa-solid fa-circle-user text-primary me-1"></i>
+                                {{ follow_up.assigned_user.full_name if follow_up.assigned_user else 'Unassigned' }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="text-muted small text-uppercase fw-semibold">Remarks & Discussion Objectives</label>
+                        <div class="p-3 bg-light rounded border mt-1 text-pre-wrap">
+                            {{ follow_up.remarks or 'No remarks provided.' }}
+                        </div>
+                    </div>
+
+                    {% if follow_up.status == 'Completed' %}
+                    <div class="mb-2">
+                        <label class="text-muted small text-uppercase fw-semibold text-success">
+                            <i class="fa-solid fa-circle-check me-1"></i> Completion Outcome & Notes
+                        </label>
+                        <div class="p-3 bg-success bg-opacity-10 border border-success rounded mt-1">
+                            <div class="text-success small fw-semibold mb-1">
+                                Completed on: {{ follow_up.completed_date.strftime('%Y-%m-%d %H:%M UTC') if follow_up.completed_date else 'N/A' }}
+                            </div>
+                            <div class="text-dark">
+                                {{ follow_up.completion_remarks or 'No outcome notes recorded.' }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar: Associated Entities & Audit Info -->
+        <div class="col-lg-4">
+            <!-- Associated Customer Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h6 class="fw-bold mb-0 text-primary">
+                        <i class="fa-solid fa-building me-1"></i> Customer Account
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if follow_up.customer %}
+                        <h6 class="fw-bold mb-1">{{ follow_up.customer.customer_name }}</h6>
+                        <div class="text-muted small mb-2">Code: <code>{{ follow_up.customer.customer_code }}</code></div>
+                        <p class="small mb-2"><i class="fa-solid fa-envelope me-1 text-muted"></i>{{ follow_up.customer.email }}</p>
+                        <p class="small mb-3"><i class="fa-solid fa-phone me-1 text-muted"></i>{{ follow_up.customer.phone or 'N/A' }}</p>
+                        <a href="{{ url_for('customer.details', id=follow_up.customer.id) }}" class="btn btn-sm btn-outline-primary w-100">
+                            View Customer Profile
+                        </a>
+                    {% else %}
+                        <p class="text-muted small mb-0">No direct Customer record associated (Lead outreach activity).</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Associated Lead Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h6 class="fw-bold mb-0 text-success">
+                        <i class="fa-solid fa-bullseye me-1"></i> Prospect / Lead
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if follow_up.lead %}
+                        <h6 class="fw-bold mb-1">{{ follow_up.lead.lead_name }}</h6>
+                        <div class="text-muted small mb-2">Code: <code>{{ follow_up.lead.lead_code }}</code></div>
+                        <p class="small mb-2"><i class="fa-solid fa-envelope me-1 text-muted"></i>{{ follow_up.lead.email }}</p>
+                        <p class="small mb-2"><i class="fa-solid fa-phone me-1 text-muted"></i>{{ follow_up.lead.phone or 'N/A' }}</p>
+                        <p class="small mb-3"><span class="badge bg-secondary">{{ follow_up.lead.status }}</span></p>
+                        <a href="{{ url_for('lead.details', id=follow_up.lead.id) }}" class="btn btn-sm btn-outline-success w-100">
+                            View Lead Profile
+                        </a>
+                    {% else %}
+                        <p class="text-muted small mb-0">No Lead record associated (Customer outreach activity).</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Metadata Card -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h6 class="fw-bold mb-0 text-secondary">
+                        <i class="fa-solid fa-circle-info me-1"></i> Metadata
+                    </h6>
+                </div>
+                <div class="card-body small">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Created By:</span>
+                        <span class="fw-semibold">{{ follow_up.creator.full_name if follow_up.creator else 'System' }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Created Date:</span>
+                        <span>{{ follow_up.created_date.strftime('%Y-%m-%d %H:%M') }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Record ID:</span>
+                        <code>#{{ follow_up.id }}</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

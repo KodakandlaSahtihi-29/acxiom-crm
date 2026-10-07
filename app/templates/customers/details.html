@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Acxiom CRM - Customer Details - {{ customer.customer_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+
+            <!-- Navigation and Header -->
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{{ url_for('customer.index') }}" class="btn btn-outline-secondary btn-sm rounded-circle p-2" title="Back to List">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </a>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h3 class="fw-bold mb-0">{{ customer.customer_name }}</h3>
+                            <span class="badge bg-{{ 'success' if customer.status == 'Active' else ('info' if customer.status == 'Prospect' else ('warning text-dark' if customer.status == 'Inactive' else 'danger')) }} rounded-pill px-3 py-1">
+                                {{ customer.status }}
+                            </span>
+                        </div>
+                        <span class="text-muted small">
+                            Customer Code: <strong class="text-dark font-monospace">{{ customer.customer_code }}</strong> &bull; ID #{{ customer.id }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex gap-2">
+                    {% if can_manage %}
+                        <a href="{{ url_for('customer.edit', id=customer.id) }}" class="btn btn-primary px-3 rounded-pill">
+                            <i class="fa-solid fa-pen-to-square me-1"></i> Edit
+                        </a>
+                        <a href="{{ url_for('customer.delete', id=customer.id) }}" class="btn btn-outline-danger px-3 rounded-pill">
+                            <i class="fa-solid fa-trash me-1"></i> Delete
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <!-- Contact & Company Card -->
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-building text-primary"></i> Company &amp; Contact
+                            </h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Company</span>
+                                    <span class="fw-semibold">{{ customer.company_name or 'Not specified' }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Corporate Email</span>
+                                    <a href="mailto:{{ customer.email }}" class="text-decoration-none fw-semibold">
+                                        {{ customer.email }}
+                                    </a>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Phone Number</span>
+                                    <a href="tel:{{ customer.phone }}" class="text-decoration-none fw-semibold">
+                                        {{ customer.phone }}
+                                    </a>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Lifecycle Status</span>
+                                    <span class="badge bg-light text-dark border">{{ customer.status }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Address & Location Card -->
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-map-location-dot text-danger"></i> Geographic Location
+                            </h5>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">Street Address</span>
+                                    <span class="fw-semibold text-end">{{ customer.address or 'Not specified' }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">City</span>
+                                    <span class="fw-semibold">{{ customer.city or 'Not specified' }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between px-0">
+                                    <span class="text-muted">State / Province</span>
+                                    <span class="fw-semibold">{{ customer.state or 'Not specified' }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ownership & Audit Metadata Card (Safe: No sensitive auth info exposed) -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-clipboard-check text-success"></i> Audit &amp; Ownership Record
+                    </h5>
+                    <div class="row g-3">
+                        <div class="col-sm-6 col-md-4">
+                            <div class="p-3 bg-light rounded-3">
+                                <small class="text-muted d-block mb-1">Created Date</small>
+                                <span class="fw-bold text-dark">
+                                    <i class="fa-solid fa-calendar me-1 text-primary"></i>
+                                    {{ customer.created_date.strftime('%Y-%m-%d %H:%M:%S UTC') }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-md-4">
+                            <div class="p-3 bg-light rounded-3">
+                                <small class="text-muted d-block mb-1">Created By (Sales Rep / Owner)</small>
+                                <span class="fw-bold text-dark">
+                                    <i class="fa-solid fa-user me-1 text-primary"></i>
+                                    {{ customer.creator.full_name if customer.creator else 'Unknown' }}
+                                </span>
+                                <small class="text-muted">({{ customer.creator.role if customer.creator else 'N/A' }})</small>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-md-4">
+                            <div class="p-3 bg-light rounded-3">
+                                <small class="text-muted d-block mb-1">Record Governance</small>
+                                <span class="fw-bold text-success">
+                                    <i class="fa-solid fa-shield-halved me-1"></i> Active Record
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
