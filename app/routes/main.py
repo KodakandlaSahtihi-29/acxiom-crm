@@ -1,5 +1,5 @@
 from datetime import date
-from flask import Blueprint, render_template, jsonify
+from flask import Blueprint, render_template, jsonify, redirect, url_for
 from flask_login import login_required, current_user
 from sqlalchemy import text
 from app.extensions import db
@@ -117,7 +117,15 @@ def _get_dashboard_metrics(user):
 
 @main_bp.route('/')
 def index():
-    """Public landing / foundation status page."""
+    """CRM Home route: redirect to dashboard if authenticated, else login."""
+    if current_user.is_authenticated:
+        return redirect(url_for('main.dashboard'))
+    return redirect(url_for('auth.login'))
+
+
+@main_bp.route('/system-status')
+def system_status():
+    """Internal system verification diagnostics."""
     db_status = "Connected"
     error_msg = None
     try:

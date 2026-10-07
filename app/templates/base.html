@@ -37,11 +37,6 @@
 
             <div class="collapse navbar-collapse" id="navbarContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.index') }}">
-                            <i class="fa-solid fa-house me-1"></i> Home
-                        </a>
-                    </li>
                     {% if current_user.is_authenticated %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('main.dashboard') }}">
@@ -93,17 +88,19 @@
                             <li><a class="dropdown-item text-primary fw-semibold" href="{{ url_for('activity.create') }}"><i class="fa-solid fa-plus me-2"></i>New Activity</a></li>
                         </ul>
                     </li>
+                    {% if current_user.role in ['Manager', 'Admin'] %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('main.manager_portal') }}">
                             <i class="fa-solid fa-briefcase me-1"></i> Manager View
                         </a>
                     </li>
+                    {% endif %}
+                    {% if current_user.role == 'Admin' %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('main.admin_portal') }}">
                             <i class="fa-solid fa-shield-halved me-1"></i> Admin View
                         </a>
                     </li>
-                    {% if current_user.role == 'Admin' %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('audit.index') }}">
                             <i class="fa-solid fa-clipboard-list me-1"></i> Audit Logs

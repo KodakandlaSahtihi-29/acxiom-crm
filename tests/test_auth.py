@@ -45,7 +45,11 @@ class AuthSecurityTestCase(unittest.TestCase):
             'lockout_test@acxiom.com',
             'manager_test@acxiom.com',
             'admin_test@acxiom.com',
-            'duplicate@acxiom.com'
+            'duplicate@acxiom.com',
+            'sales@acxiom.com',
+            'different_email@acxiom.com',
+            'wrong@acxiom.com',
+            'logout@acxiom.com'
         ]
         User.query.filter(User.email.in_(test_emails)).delete(synchronize_session=False)
         db.session.commit()
@@ -58,7 +62,11 @@ class AuthSecurityTestCase(unittest.TestCase):
             'lockout_test@acxiom.com',
             'manager_test@acxiom.com',
             'admin_test@acxiom.com',
-            'duplicate@acxiom.com'
+            'duplicate@acxiom.com',
+            'sales@acxiom.com',
+            'different_email@acxiom.com',
+            'wrong@acxiom.com',
+            'logout@acxiom.com'
         ]
         User.query.filter(User.email.in_(test_emails)).delete(synchronize_session=False)
         db.session.commit()
